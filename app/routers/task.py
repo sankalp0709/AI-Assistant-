@@ -3,12 +3,22 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 # FIXED IMPORT ✔
 from ..core.database import get_db, Task
+from ..core.taskflow import task_flow
 
 router = APIRouter()
+
+
+class TaskClassificationRequest(BaseModel):
+    intent: str
+    entities: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
+    original_text: str = ""
+    confidence: float = 0.8
+    text: str = ""  # Add text field for PDF rules
 
 
 class TaskRequest(BaseModel):
@@ -26,6 +36,13 @@ class TaskResponse(BaseModel):
     status: str
     created_at: str
     updated_at: str
+
+
+@router.post("/task")
+async def create_task_classification(request: TaskClassificationRequest):
+    """Cognitive task mapping - convert intent data to structured task."""
+    task = task_flow.build_task(request.dict())
+    return {"task": task}
 
 
 @router.post("/tasks", response_model=TaskResponse)

@@ -3,6 +3,8 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
+# Set API key for all requests
+client.headers.update({"X-API-Key": "localtest"})
 
 def test_root():
     response = client.get("/")
@@ -25,7 +27,7 @@ def test_task():
     assert "task_id" in response.json()
 
 def test_decision_hub():
-    response = client.post("/api/decision_hub", json={
+    response = client.post("/api/decision_hub", data={
         "input_text": "Test input",
         "platform": "web",
         "device_context": "desktop"

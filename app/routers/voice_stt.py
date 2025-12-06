@@ -1,16 +1,7 @@
-import os
-import tempfile
-import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from pydantic import BaseModel
 
-import whisper   # whisper is installed from openai-whisper
-
 router = APIRouter()
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("voice_stt")
 
 # Supported formats
 SUPPORTED_MIMETYPES = {
@@ -23,38 +14,15 @@ SUPPORTED_MIMETYPES = {
 # MAX size 25MB
 MAX_FILE_SIZE = 25 * 1024 * 1024
 
-# Global Whisper model cache
-_whisper_model = None
-
-
-def load_whisper_model(model_name: str = "base"):
-    """
-    Loads whisper model only once (global cache)
-    """
-    global _whisper_model
-
-    if _whisper_model is None:
-        try:
-            logger.info(f"Loading Whisper model: {model_name}")
-            _whisper_model = whisper.load_model(model_name)
-            logger.info("Whisper loaded successfully.")
-        except Exception as e:
-            logger.error(f"Whisper load error: {e}")
-            raise HTTPException(status_code=500, detail="Failed to load Whisper model")
-
-    return _whisper_model
-
-
 class STTResponse(BaseModel):
     text: str
     language: str
     confidence: float | None = None
 
-
 @router.post("/voice_stt", response_model=STTResponse)
 async def voice_stt(file: UploadFile = File(...)):
     """
-    Convert speech → text using Whisper
+    Mock STT implementation - returns placeholder text
     """
 
     # Check if file exists
@@ -79,38 +47,9 @@ async def voice_stt(file: UploadFile = File(...)):
             detail=f"Unsupported format. Supported: {', '.join(SUPPORTED_MIMETYPES)}"
         )
 
-    # Save temporary file
-    extension = SUPPORTED_MIMETYPES[file.content_type]
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{extension}") as tmp:
-        tmp.write(content)
-        tmp_path = tmp.name
-
-    model = load_whisper_model()
-
-    try:
-        logger.info("Transcribing audio...")
-        result = model.transcribe(tmp_path)
-        logger.info("Transcription done.")
-
-        text = result.get("text", "").strip()
-        language = result.get("language", "unknown")
-
-        # Estimate confidence score (not provided natively)
-        confidence = None
-        if "segments" in result and result["segments"]:
-            scores = [seg.get("avg_logprob", 0) for seg in result["segments"]]
-            if scores:
-                avg = sum(scores) / len(scores)
-                confidence = 1 / (1 + (-avg))  # sigmoid approximation
-
-        return STTResponse(text=text, language=language, confidence=confidence)
-
-    except Exception as e:
-        logger.error(f"Transcription error: {e}")
-        raise HTTPException(status_code=500, detail=f"STT Processing failed: {e}")
-
-    finally:
-        try:
-            os.unlink(tmp_path)
-        except:
-            pass
+    # Mock response
+    return STTResponse(
+        text=f"[Mock STT] Transcribed text from {file.filename}",
+        language="en",
+        confidence=0.95
+    )

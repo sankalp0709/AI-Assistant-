@@ -26,7 +26,8 @@ class DecisionHub:
         try:
             async with httpx.AsyncClient() as client:
                 files = {"file": ("audio.wav", BytesIO(audio_data), content_type)}
-                response = await client.post("http://localhost:8000/api/voice_stt", files=files)
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
+                response = await client.post("http://localhost:8000/api/voice_stt", files=files, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -39,7 +40,8 @@ class DecisionHub:
         try:
             async with httpx.AsyncClient() as client:
                 payload = {"text": text, "voice": voice, "model": model}
-                response = await client.post("http://localhost:8000/api/voice_tts", json=payload)
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
+                response = await client.post("http://localhost:8000/api/voice_tts", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -52,7 +54,8 @@ class DecisionHub:
         try:
             async with httpx.AsyncClient() as client:
                 payload = {"description": description}
-                response = await client.post("http://localhost:8000/api/tasks", json=payload)
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
+                response = await client.post("http://localhost:8000/api/tasks", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -64,12 +67,13 @@ class DecisionHub:
         """Generate response using Respond or Summarize API based on intent"""
         try:
             async with httpx.AsyncClient() as client:
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
                 if intent == "summarize":
                     payload = {"text": query, "model": model}
-                    response = await client.post("http://localhost:8000/api/summarize", json=payload)
+                    response = await client.post("http://localhost:8000/api/summarize", json=payload, headers=headers)
                 else:
                     payload = {"query": query, "context": context or {}, "model": model}
-                    response = await client.post("http://localhost:8000/api/respond", json=payload)
+                    response = await client.post("http://localhost:8000/api/respond", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -104,10 +108,29 @@ class DecisionHub:
 
         # Detect intent from processed text
         try:
-            intent = await self.detect_intent(processed_text)
+            intent_data = await self.detect_intent(processed_text)
+            intent = intent_data["intent"]
         except Exception as e:
             print(f"Intent detection failed: {e}. Using fallback.")
-            intent = "general"
+            intent_data = {
+                "intent": "general",
+                "entities": {},
+                "context": {"priority": "normal"},
+                "original_text": processed_text,
+                "confidence": 0.5
+            }
+            intent = intent_data["intent"]
+
+        # Get task classification
+        try:
+            task_data = await self.call_task_api(intent_data)
+        except Exception as e:
+            print(f"Task classification failed: {e}")
+            task_data = {"task": {"task_type": "general_task", "parameters": {}, "priority": "normal"}}
+
+        # BHIV routing
+        if intent in ["complex", "multi-step", "research", "analysis"]:
+            return {"final_decision": "bhiv_core", "intent": intent, "processed_text": processed_text, "task_data": task_data}
 
         score = platform_scores.get(device_context, {"voice": 0.5, "text": 0.5})[action_type]
 
@@ -180,22 +203,42 @@ class DecisionHub:
 
         return decision
 
-    async def detect_intent(self, text: str) -> str:
+    async def call_task_api(self, intent_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Call the task classification API."""
+        async with httpx.AsyncClient() as client:
+            try:
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
+                response = await client.post("http://localhost:8000/api/task", json=intent_data, headers=headers)
+                response.raise_for_status()
+                return response.json()
+            except Exception as e:
+                print(f"Task API call failed: {e}")
+                raise
+
+    async def detect_intent(self, text: str) -> Dict[str, Any]:
         # Use real LLM-based intent detection via internal API
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post("http://localhost:8000/api/intent", json={"text": text})
+                headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
+                response = await client.post("http://localhost:8000/api/intent", json={"text": text}, headers=headers)
                 response.raise_for_status()
                 data = response.json()
-                return data["intent"]
+                return data  # Return full response
             except Exception as e:
                 # Fallback to keyword matching if API is unavailable
                 print(f"Intent detection API failed: {e}. Using fallback.")
+                intent = "general"
                 if "summarize" in text.lower():
-                    return "summarize"
+                    intent = "summarize"
                 elif "task" in text.lower():
-                    return "task"
-                else:
-                    return "general"
+                    intent = "task"
+                # Return fallback dict
+                return {
+                    "intent": intent,
+                    "entities": {},
+                    "context": {"priority": "normal"},
+                    "original_text": text,
+                    "confidence": 0.5
+                }
 
 decision_hub = DecisionHub()

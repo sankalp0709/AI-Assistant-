@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from ..core.llm_bridge import llm_bridge
 from ..core.bhiv_core import BHIVCore
 from ..core.bhiv_reasoner import BHIVReasoner
 from ..memory.memory_manager import MemoryManager
@@ -16,6 +15,10 @@ from ..tools.file_tool import FileTool
 from ..tools.automation_tool import AutomationTool
 
 router = APIRouter()
+
+class BHIVRequest(BaseModel):
+    query: str
+    context: dict = {}
 
 # Initialize BHIV components
 memory_manager = MemoryManager()
@@ -36,16 +39,7 @@ tools = {
 reasoner = BHIVReasoner()
 bhiv = BHIVCore(memory_manager, agents, tools, reasoner)
 
-class RespondRequest(BaseModel):
-    query: str
-    context: dict = {}
-    model: str = "uniguru"
-    decision: str = "respond"
-
-@router.post("/respond")
-async def generate_response(request: RespondRequest):
-    if request.decision == "bhiv_core":
-        return await bhiv.process(request)
-    prompt = f"Context: {request.context}\nQuery: {request.query}\nProvide a helpful response."
-    response = await llm_bridge.call_llm(request.model, prompt)
-    return {"response": response}
+@router.post("/bhiv/run")
+async def run_bhiv(request: BHIVRequest):
+    result = await bhiv.process(request)
+    return {"bhiv_output": result}

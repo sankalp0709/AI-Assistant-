@@ -40,8 +40,9 @@ from app.routers import (
     voice_stt,
     voice_tts,
     external_llm,
-    external_app,
-    auth
+    bhiv,
+    # external_app,  # Temporarily disabled
+    # auth  # Temporarily disabled
 )
 
 # Setup logging
@@ -105,7 +106,7 @@ async def security_middleware(request: Request, call_next):
 
 
 # Routers
-app.include_router(auth.router, tags=["Auth"])
+# app.include_router(auth.router, tags=["Auth"])  # Temporarily disabled
 app.include_router(summarize.router, prefix="/api", tags=["Summarize"])
 app.include_router(intent.router, prefix="/api", tags=["Intent"])
 app.include_router(task.router, prefix="/api", tags=["Task"])
@@ -116,7 +117,8 @@ app.include_router(respond.router, prefix="/api", tags=["Respond"])
 app.include_router(voice_stt.router, prefix="/api", tags=["Voice STT"])
 app.include_router(voice_tts.router, prefix="/api", tags=["Voice TTS"])
 app.include_router(external_llm.router, prefix="/api", tags=["External LLM"])
-app.include_router(external_app.router, prefix="/api", tags=["External App"])
+app.include_router(bhiv.router, prefix="/api", tags=["BHIV"])
+# app.include_router(external_app.router, prefix="/api", tags=["External App"])  # Temporarily disabled
 
 
 @app.get("/health")
