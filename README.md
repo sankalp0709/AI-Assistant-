@@ -1,10 +1,10 @@
-#  BHIV Multi-Agent AI System
+# BHIV-AI-ASSISTANT
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green.svg)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 
-**Brain-Human Interface Virtual (BHIV)** is a multi-agent AI assistant backend designed for advanced reasoning, secure memory, intelligent task mapping, and multi-platform integration.  
+**Brain-Human Interface Virtual (BHIV)** is a multi-agent AI assistant backend designed for advanced reasoning, secure memory, intelligent task mapping, and multi-platform integration.
 It integrates Seeya's NLU system, Sankalp’s cognitive task engine, and Chandresh’s secure embeddings with your BHIV multi-agent brain.
 
 ```
@@ -48,7 +48,7 @@ User Input → SummaryFlow → IntentFlow → TaskFlow → Decision Hub → BHIV
 ### 1. Clone Repository
 ```bash
 git clone <repository-url>
-cd assistant-core-v3
+cd BHIV-AI-ASSISTANT
 ```
 
 ### 2. Install Dependencies
@@ -83,8 +83,8 @@ docker-compose up --build
 
 ### Or Build Manually
 ```bash
-docker build -t assistant-core .
-docker run -p 8000:8000 --env-file .env assistant-core
+docker build -t bhiv-ai-assistant .
+docker run -p 8000:8000 --env-file .env bhiv-ai-assistant
 ```
 
 ---
@@ -233,7 +233,7 @@ docker run -p 8000:8000 --env-file .env assistant-core
 curl -X POST "http://localhost:8000/api/respond" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-api-key" \
-  -d '{"text": "What is the weather today?", "model": "openai"}'
+  -d '{"text": "What is the weather today?", "model": "chatgpt"}'
 ```
 
 ### 2. Full BHIV Multi-Agent Task
@@ -310,8 +310,22 @@ python -c "from app.main import app; print('BHIV Ready')"
 ---
 
 # 🎯 Roadmap
-- More agent specialization  
-- Tool expansion  
-- Multi-modal support  
-- Realtime collaboration  
-- Autonomous workflows  
+- More agent specialization
+- Tool expansion
+- Multi-modal support
+- Realtime collaboration
+- Autonomous workflows
+
+---
+
+# 📝 Recent Updates
+
+### v1.0.x (Latest)
+- **LLM Bridge Enhancement**: Replaced mock responses with real API integrations for OpenAI (GPT-3.5-turbo), Groq (Mixtral-8x7B), Google Generative AI (Gemini Pro), and Mistral (Mistral Medium). API keys are now required and validated from environment variables.
+- **Project Cleanup**: Removed all `__pycache__` directories across the project for cleaner repository management.
+
+### Previous Updates
+- Initial multi-agent architecture implementation
+- Secure embedding pipeline integration
+- NLU and cognitive task mapping modules
+- Docker containerization

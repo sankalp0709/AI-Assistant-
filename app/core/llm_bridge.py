@@ -1,40 +1,75 @@
 import os
-from typing import Optional
+import asyncio
 import hashlib
+
+from openai import AsyncOpenAI
+from groq import AsyncGroq
+import google.generativeai as genai
+from mistralai.client import MistralClient
+
 
 class LLMBridge:
     def __init__(self):
-        # Mock implementation - no external dependencies
+        self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        self.groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        self.google_key = os.getenv("GOOGLE_API_KEY")
+        self.mistral_client = MistralClient(api_key=os.getenv("MISTRAL_API_KEY"))
+
+        if self.google_key:
+            genai.configure(api_key=self.google_key)
+
         self.cache = {}
 
     async def call_llm(self, model: str, prompt: str) -> str:
-        # Validate prompt
-        if not isinstance(prompt, str) or not prompt.strip():
-            raise ValueError("Invalid prompt: must be a non-empty string")
+        if not prompt or not isinstance(prompt, str):
+            raise ValueError("Prompt must be a non-empty string")
 
         prompt = prompt.strip()
+        key = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
 
-        # Check cache first
-        prompt_hash = hashlib.sha256(f"{model}:{prompt}".encode()).hexdigest()
-        if prompt_hash in self.cache:
-            return self.cache[prompt_hash]
+        if key in self.cache:
+            return self.cache[key]
 
-        # Mock responses based on model
+        # ----- OPENAI -----
         if model == "chatgpt":
-            response = f"[ChatGPT Mock] Summary of: {prompt[:50]}..."
-        elif model == "groq":
-            response = f"[Groq Mock] Response to: {prompt[:50]}..."
-        elif model == "gemini":
-            response = f"[Gemini Mock] Analysis of: {prompt[:50]}..."
-        elif model == "mistral":
-            response = f"[Mistral Mock] Reply to: {prompt[:50]}..."
-        elif model == "uniguru":
-            response = f"[UniGuru Mock] Local response to: {prompt[:50]}..."
-        else:
-            response = f"[Mock {model}] Processed: {prompt[:50]}..."
+            response = await self.openai_client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            output = response.choices[0].message.content
 
-        # Cache the response
-        self.cache[prompt_hash] = response
-        return response
+        # ----- GROQ -----
+        elif model == "groq":
+            response = await self.groq_client.chat.completions.create(
+                model="mixtral-8x7b-instruct",
+                messages=[{"role": "user", "content": prompt}]
+            )
+            output = response.choices[0].message.content
+
+        # ----- GEMINI -----
+        elif model == "gemini":
+            gemini_model = genai.GenerativeModel("gemini-pro")
+            result = await asyncio.to_thread(gemini_model.generate_content, prompt)
+            output = result.text
+
+        # ----- MISTRAL -----
+        elif model == "mistral":
+            result = await asyncio.to_thread(
+                self.mistral_client.chat,
+                model="mistral-medium",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            output = result.choices[0].message["content"]
+
+        # ----- UNIGURU -----
+        elif model == "uniguru":
+            output = f"[UniGuru Mock] Local response to: {prompt[:50]}..."
+
+        else:
+            raise ValueError(f"Unsupported model: {model}")
+
+        self.cache[key] = output
+        return output
+
 
 llm_bridge = LLMBridge()
