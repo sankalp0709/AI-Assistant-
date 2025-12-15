@@ -12,8 +12,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
+from fastapi.security import APIKeyHeader
+from fastapi.openapi.utils import get_openapi
 
-load_dotenv()  # Load environment variables
+# ------------------------------
+# Load environment variables
+# ------------------------------
+load_dotenv(dotenv_path=os.path.join(ROOT_DIR, '.env'))
+
+print("Loaded API KEY:", os.getenv("API_KEY"))
 
 # Initialize Sentry if enabled
 if os.getenv("SENTRY_DSN"):
@@ -24,7 +31,7 @@ if os.getenv("SENTRY_DSN"):
         environment=os.getenv("ENV", "development"),
     )
 
-# Local imports (WORK NOW because sys.path is fixed)
+# Local imports
 from .core.logging import setup_logging, get_logger
 from .core.database import create_tables
 from .core.security import authenticate_user, rate_limit, audit_log
@@ -41,8 +48,6 @@ from app.routers import (
     voice_tts,
     external_llm,
     bhiv,
-    # external_app,  # Temporarily disabled
-    # auth  # Temporarily disabled
 )
 
 # Setup logging
@@ -56,14 +61,58 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# Add API Key Scheme for Swagger UI
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
 app = FastAPI(
     title="Assistant Core v3",
     description="Multi-Platform Brain & Integration Layer",
     version="3.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    swagger_ui_parameters={"persistAuthorization": True}
 )
 
+# ------------------------------
+# Add API KEY security to OpenAPI Docs
+# ------------------------------
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="Assistant Core v3",
+        version="3.0.0",
+        description="Multi-Platform Brain & Integration Layer",
+        routes=app.routes,
+    )
+
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "APIKeyHeader": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key"
+        }
+    }
+
+    # Apply global requirement for all /api routes
+    for path in openapi_schema["paths"]:
+        if path.startswith("/api"):
+            for method in openapi_schema["paths"][path]:
+                openapi_schema["paths"][path][method]["security"] = [
+                    {"APIKeyHeader": []}
+                ]
+
+    app.openapi_schema = openapi_schema
+    return openapi_schema
+
+
+app.openapi = custom_openapi
+
+
+# ------------------------------
 # CORS
+# ------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -73,9 +122,12 @@ app.add_middleware(
 )
 
 
-# Security middleware
+# ------------------------------
+# Security Middleware
+# ------------------------------
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
+
     if not request.url.path.startswith("/api"):
         return await call_next(request)
 
@@ -90,8 +142,8 @@ async def security_middleware(request: Request, call_next):
 
     elif auth_header and auth_header.startswith("Bearer "):
         from .core.security import verify_token_string
-        token = auth_header.split(" ")[1]
         try:
+            token = auth_header.split(" ")[1]
             token_data = verify_token_string(token)
             user = token_data.username
         except:
@@ -101,12 +153,12 @@ async def security_middleware(request: Request, call_next):
         return JSONResponse(status_code=401, content={"detail": "Authentication failed"})
 
     audit_log(request, user)
-
     return await call_next(request)
 
 
-# Routers
-# app.include_router(auth.router, tags=["Auth"])  # Temporarily disabled
+# ------------------------------
+# ROUTERS
+# ------------------------------
 app.include_router(summarize.router, prefix="/api", tags=["Summarize"])
 app.include_router(intent.router, prefix="/api", tags=["Intent"])
 app.include_router(task.router, prefix="/api", tags=["Task"])
@@ -118,9 +170,11 @@ app.include_router(voice_stt.router, prefix="/api", tags=["Voice STT"])
 app.include_router(voice_tts.router, prefix="/api", tags=["Voice TTS"])
 app.include_router(external_llm.router, prefix="/api", tags=["External LLM"])
 app.include_router(bhiv.router, prefix="/api", tags=["BHIV"])
-# app.include_router(external_app.router, prefix="/api", tags=["External App"])  # Temporarily disabled
 
 
+# ------------------------------
+# SYSTEM ENDPOINTS
+# ------------------------------
 @app.get("/health")
 async def health_check():
     return {

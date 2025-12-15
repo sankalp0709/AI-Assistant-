@@ -44,8 +44,11 @@ class RespondRequest(BaseModel):
 
 @router.post("/respond")
 async def generate_response(request: RespondRequest):
-    if request.decision == "bhiv_core":
-        return await bhiv.process(request)
-    prompt = f"Context: {request.context}\nQuery: {request.query}\nProvide a helpful response."
-    response = await llm_bridge.call_llm(request.model, prompt)
-    return {"response": response}
+    try:
+        if request.decision == "bhiv_core":
+            return await bhiv.process(request)
+        prompt = f"Context: {request.context}\nQuery: {request.query}\nProvide a helpful response."
+        response = await llm_bridge.call_llm(request.model, prompt)
+        return {"response": response}
+    except Exception as e:
+        return {"error": f"Failed to generate response: {str(e)}"}

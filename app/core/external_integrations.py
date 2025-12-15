@@ -6,9 +6,16 @@ try:
 except ImportError:
     NotionClient = None
     NotionAPIError = Exception
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import trello
+try:
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+except ImportError:
+    gspread = None
+    ServiceAccountCredentials = None
+try:
+    import trello
+except ImportError:
+    trello = None
 from smtplib import SMTP, SMTPException
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -16,6 +23,8 @@ import json
 
 class NotionIntegration:
     def __init__(self):
+        if NotionClient is None:
+            raise ImportError("notion_client not installed")
         self.token = os.environ.get('NOTION_TOKEN')
         if not self.token:
             raise ValueError("NOTION_TOKEN environment variable not set")
@@ -52,6 +61,8 @@ class NotionIntegration:
 
 class GoogleSheetsIntegration:
     def __init__(self):
+        if gspread is None or ServiceAccountCredentials is None:
+            raise ImportError("gspread or oauth2client not installed")
         creds_json = os.environ.get('GOOGLE_SHEETS_CREDENTIALS')
         if not creds_json:
             raise ValueError("GOOGLE_SHEETS_CREDENTIALS environment variable not set")
@@ -70,6 +81,8 @@ class GoogleSheetsIntegration:
 
 class TrelloIntegration:
     def __init__(self):
+        if trello is None:
+            raise ImportError("trello not installed")
         self.api_key = os.environ.get('TRELLO_API_KEY')
         self.token = os.environ.get('TRELLO_TOKEN')
         if not self.api_key or not self.token:
