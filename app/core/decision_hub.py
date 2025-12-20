@@ -24,10 +24,11 @@ class DecisionHub:
     async def process_voice_input(self, audio_data: bytes, content_type: str = "audio/wav") -> Dict[str, Any]:
         """Process voice input using STT API"""
         try:
+            base_url = os.getenv("BASE_URL", "http://localhost:8000")
             async with httpx.AsyncClient() as client:
                 files = {"file": ("audio.wav", BytesIO(audio_data), content_type)}
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
-                response = await client.post("http://localhost:8000/api/voice_stt", files=files, headers=headers)
+                response = await client.post(f"{base_url}/api/voice_stt", files=files, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -38,10 +39,11 @@ class DecisionHub:
     async def generate_voice_output(self, text: str, voice: str = "alloy", model: str = "tts-1") -> Dict[str, Any]:
         """Generate voice output using TTS API"""
         try:
+            base_url = os.getenv("BASE_URL", "http://localhost:8000")
             async with httpx.AsyncClient() as client:
                 payload = {"text": text, "voice": voice, "model": model}
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
-                response = await client.post("http://localhost:8000/api/voice_tts", json=payload, headers=headers)
+                response = await client.post(f"{base_url}/api/voice_tts", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -52,10 +54,11 @@ class DecisionHub:
     async def create_task(self, description: str) -> Dict[str, Any]:
         """Create a new task using Task API"""
         try:
+            base_url = os.getenv("BASE_URL", "http://localhost:8000")
             async with httpx.AsyncClient() as client:
                 payload = {"description": description}
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
-                response = await client.post("http://localhost:8000/api/tasks", json=payload, headers=headers)
+                response = await client.post(f"{base_url}/api/tasks", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -66,14 +69,15 @@ class DecisionHub:
     async def generate_response(self, query: str, intent: str, context: Dict[str, Any] = None, model: str = "uniguru") -> Dict[str, Any]:
         """Generate response using Respond or Summarize API based on intent"""
         try:
+            base_url = os.getenv("BASE_URL", "http://localhost:8000")
             async with httpx.AsyncClient() as client:
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
                 if intent == "summarize":
                     payload = {"text": query, "model": model}
-                    response = await client.post("http://localhost:8000/api/summarize", json=payload, headers=headers)
+                    response = await client.post(f"{base_url}/api/summarize", json=payload, headers=headers)
                 else:
                     payload = {"query": query, "context": context or {}, "model": model}
-                    response = await client.post("http://localhost:8000/api/respond", json=payload, headers=headers)
+                    response = await client.post(f"{base_url}/api/respond", json=payload, headers=headers)
                 response.raise_for_status()
                 return response.json()
         except httpx.HTTPStatusError as e:
@@ -205,10 +209,11 @@ class DecisionHub:
 
     async def call_task_api(self, intent_data: Dict[str, Any]) -> Dict[str, Any]:
         """Call the task classification API."""
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
         async with httpx.AsyncClient() as client:
             try:
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
-                response = await client.post("http://localhost:8000/api/task", json=intent_data, headers=headers)
+                response = await client.post(f"{base_url}/api/task", json=intent_data, headers=headers)
                 response.raise_for_status()
                 return response.json()
             except Exception as e:
@@ -217,10 +222,11 @@ class DecisionHub:
 
     async def detect_intent(self, text: str) -> Dict[str, Any]:
         # Use real LLM-based intent detection via internal API
+        base_url = os.getenv("BASE_URL", "http://localhost:8000")
         async with httpx.AsyncClient() as client:
             try:
                 headers = {"X-API-Key": os.getenv("API_KEY", "localtest")}
-                response = await client.post("http://localhost:8000/api/intent", json={"text": text}, headers=headers)
+                response = await client.post(f"{base_url}/api/intent", json={"text": text}, headers=headers)
                 response.raise_for_status()
                 data = response.json()
                 return data  # Return full response

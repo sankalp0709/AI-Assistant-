@@ -48,6 +48,7 @@ from app.routers import (
     voice_tts,
     external_llm,
     bhiv,
+    assistant,
 )
 
 # Setup logging
@@ -170,6 +171,7 @@ app.include_router(voice_stt.router, prefix="/api", tags=["Voice STT"])
 app.include_router(voice_tts.router, prefix="/api", tags=["Voice TTS"])
 app.include_router(external_llm.router, prefix="/api", tags=["External LLM"])
 app.include_router(bhiv.router, prefix="/api", tags=["BHIV"])
+app.include_router(assistant.router, prefix="/api", tags=["Assistant"])
 
 
 # ------------------------------
