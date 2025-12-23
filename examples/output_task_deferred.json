@@ -1,0 +1,10 @@
+{
+  "assistant_message": "Task deferred. Patch Rollout.",
+  "action_taken": "Deferred task",
+  "next_steps": [
+    "Resolve blockers",
+    "Reschedule"
+  ],
+  "confidence_level": "medium",
+  "trace_id": "trace-003"
+}

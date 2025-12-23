@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "title": "Email campaign send",
+    "confidence": 0.35
+  },
+  "task": {
+    "id": "T-004",
+    "label": "Campaign Send",
+    "status": "failed"
+  },
+  "routing": {
+    "trace_id": "trace-004",
+    "path": "marketing.email"
+  },
+  "execution_status": {
+    "status": "failed",
+    "error": "SMTP credentials invalid"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "summary": {
+    "title": "Generate monthly report",
+    "confidence_level": "high"
+  },
+  "task": {
+    "id": "T-001",
+    "name": "Monthly Report Generation",
+    "status": "created"
+  },
+  "routing": {
+    "trace_id": "trace-001",
+    "path": "reports.monthly"
+  },
+  "execution_status": {
+    "status": "created"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "assistant_message": "Task failed. Campaign Send.",
+  "action_taken": "Recorded failure",
+  "next_steps": [
+    "Review cause",
+    "Apply fix",
+    "Retry"
+  ],
+  "confidence_level": "low",
+  "trace_id": "trace-004"
+}

@@ -1,0 +1,18 @@
+{
+  "summary": {
+    "title": "Database backup",
+    "confidence": 0.72
+  },
+  "task": {
+    "id": "T-002",
+    "title": "Nightly DB Backup",
+    "status": "scheduled"
+  },
+  "routing": {
+    "trace_id": "trace-002",
+    "path": "ops.backup"
+  },
+  "execution_status": {
+    "status": "scheduled"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "title": "Security patch rollout",
+    "confidence_level": "medium"
+  },
+  "task": {
+    "id": "T-003",
+    "display_name": "Patch Rollout",
+    "status": "deferred"
+  },
+  "routing": {
+    "trace_id": "trace-003",
+    "path": "ops.security"
+  },
+  "execution_status": {
+    "status": "deferred",
+    "reason": "Awaiting maintenance window"
+  }
+}
