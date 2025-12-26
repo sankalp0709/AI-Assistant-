@@ -1,0 +1,10 @@
+{
+  "assistant_message": "Clarification needed. Customer Data Export.",
+  "action_taken": "Requested clarification",
+  "next_steps": [
+    "Provide missing details",
+    "Confirm scope"
+  ],
+  "confidence_level": "medium",
+  "trace_id": "trace-005"
+}

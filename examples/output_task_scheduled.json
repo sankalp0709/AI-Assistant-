@@ -1,0 +1,10 @@
+{
+  "assistant_message": "Task scheduled. Nightly DB Backup.",
+  "action_taken": "Scheduled task",
+  "next_steps": [
+    "Await schedule",
+    "Confirm start"
+  ],
+  "confidence_level": "high",
+  "trace_id": "trace-002"
+}

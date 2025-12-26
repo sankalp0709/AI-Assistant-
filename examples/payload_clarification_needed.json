@@ -1,0 +1,19 @@
+{
+  "summary": {
+    "title": "Data export",
+    "confidence_level": "medium"
+  },
+  "task": {
+    "id": "T-005",
+    "name": "Customer Data Export",
+    "requires_clarification": true
+  },
+  "routing": {
+    "trace_id": "trace-005",
+    "path": "data.export"
+  },
+  "execution_status": {
+    "status": "created",
+    "requires_clarification": true
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "title": "Onboarding checklist"
+  },
+  "task": {
+    "id": "T-006",
+    "title": "Onboarding",
+    "status": "ready"
+  },
+  "routing": {
+    "path": "hr.onboarding",
+    "trace_id": "trace-006"
+  },
+  "execution_status": {}
+}
