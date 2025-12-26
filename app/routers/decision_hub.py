@@ -2,8 +2,8 @@ from fastapi import APIRouter, UploadFile, File, Form
 from pydantic import BaseModel
 from typing import Optional
 
-# FIXED IMPORT ✔
-from ..core.decision_hub import decision_hub
+from ..core.system import decision_hub, bhiv
+from ..core.response_composer import response_composer
 
 router = APIRouter()
 
@@ -32,4 +32,53 @@ async def make_decision(
         voice_input,
         audio_data
     )
-    return decision
+    
+    # Execution Status
+    execution_status = {"status": "success"}
+    if "integration_error" in decision:
+        execution_status = {
+            "status": "error",
+            "error": decision["integration_error"]
+        }
+
+    # Handle BHIV Core routing
+    if decision.get("final_decision") == "bhiv_core":
+        try:
+            # We need to construct a request object that BHIV expects.
+            # Assuming BHIV expects an object with .query and .context attributes or dict.
+            # bhiv.process(request) expects an object with .query attribute based on RespondRequest in respond.py
+            # But in bhiv.py it uses BHIVRequest which has query and context.
+            # Let's create a simple object or dict.
+            
+            class BHIVInput:
+                def __init__(self, query, context):
+                    self.query = query
+                    self.context = context
+            
+            bhiv_input = BHIVInput(
+                query=decision.get("processed_text", input_text),
+                context={"intent": decision.get("intent")}
+            )
+            
+            bhiv_result = await bhiv.process(bhiv_input)
+            
+            # Update decision with BHIV result
+            decision["bhiv_output"] = bhiv_result
+            # Assuming BHIV returns a text response in the result, or we need to extract it.
+            # If bhiv_result is a string, use it. If dict, extract.
+            if isinstance(bhiv_result, dict):
+                 decision["response"] = bhiv_result.get("response") or str(bhiv_result)
+            else:
+                 decision["response"] = str(bhiv_result)
+                 
+        except Exception as e:
+            execution_status = {"status": "error", "error": f"BHIV execution failed: {str(e)}"}
+
+    # Compose standardized response
+    formatted_response = response_composer.compose_response(
+        routing=decision,
+        task=decision.get("task_created") or decision.get("task_data"),
+        execution_status=execution_status
+    )
+
+    return formatted_response

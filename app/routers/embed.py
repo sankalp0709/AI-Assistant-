@@ -11,7 +11,12 @@ import os
 # Add embed_core to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'embed_core'))
 
-from assistant_pipeline import process_message
+try:
+    from assistant_pipeline import process_message
+except ImportError:
+    # Mock implementation if module is missing
+    def process_message(*args, **kwargs):
+        return {"status": "error", "error_message": "EmbedCore module missing"}
 
 router = APIRouter()
 
