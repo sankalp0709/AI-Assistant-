@@ -1,4 +1,4 @@
-import numpy as np
+import math
 
 class RLActionSelector:
     def __init__(self):
@@ -27,20 +27,20 @@ class RLActionSelector:
 
             scores.append(score)
 
-        # Apply softmax to convert scores to probabilities
-        scores = np.array(scores)
-        exp_scores = np.exp(scores)
-        probabilities = exp_scores / np.sum(exp_scores)
+        # Apply softmax to convert scores to probabilities (no numpy)
+        exp_scores = [math.exp(s) for s in scores]
+        total = sum(exp_scores) if exp_scores else 1.0
+        probabilities = [e / total for e in exp_scores]
 
         # Selected action: highest probability
-        selected_idx = np.argmax(probabilities)
+        selected_idx = max(range(len(probabilities)), key=lambda i: probabilities[i]) if probabilities else 0
         selected_action = actions[selected_idx]
 
         # Full probability distribution
-        prob_dist = {action: float(prob) for action, prob in zip(actions, probabilities)}
+        prob_dist = {action: float(probabilities[i]) for i, action in enumerate(actions)}
 
         # Ranked actions list: sorted by probability descending
-        ranked = sorted(zip(actions, probabilities), key=lambda x: x[1], reverse=True)
-        ranked_actions = [action for action, _ in ranked]
+        ranked_indices = sorted(range(len(probabilities)), key=lambda i: probabilities[i], reverse=True)
+        ranked_actions = [actions[i] for i in ranked_indices]
 
         return selected_action, prob_dist, ranked_actions

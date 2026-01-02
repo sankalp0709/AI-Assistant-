@@ -107,11 +107,12 @@ class EmailIntegration:
         self.port = int(os.environ.get('SMTP_PORT', 587))
         self.user = os.environ.get('SMTP_USER')
         self.password = os.environ.get('SMTP_PASS')
-        if not all([self.server, self.user, self.password]):
-            raise ValueError("SMTP_SERVER, SMTP_USER, SMTP_PASS environment variables not set")
+        self._stub_mode = not all([self.server, self.user, self.password])
 
     def send_email(self, to_email, subject, body):
         try:
+            if self._stub_mode:
+                return {"status": "stub", "email_action": "send_email", "to": to_email, "subject": subject}
             msg = MIMEMultipart()
             msg['From'] = self.user
             msg['To'] = to_email

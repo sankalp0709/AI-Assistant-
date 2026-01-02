@@ -16,10 +16,16 @@ except ImportError:
 
 class LLMBridge:
     def __init__(self):
-        self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        self.groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        self.openai_client = None
+        if os.getenv("OPENAI_API_KEY"):
+            self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            
+        self.groq_client = None
+        if os.getenv("GROQ_API_KEY"):
+            self.groq_client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+            
         self.google_key = os.getenv("GOOGLE_API_KEY")
-        self.mistral_client = MistralClient(api_key=os.getenv("MISTRAL_API_KEY")) if MistralClient else None
+        self.mistral_client = MistralClient(api_key=os.getenv("MISTRAL_API_KEY")) if MistralClient and os.getenv("MISTRAL_API_KEY") else None
 
         if genai and self.google_key:
             genai.configure(api_key=self.google_key)
@@ -81,6 +87,7 @@ class LLMBridge:
 
         except Exception as e:
             # Fallback to mock response on any error
+            print(f"LLM Call Failed: {e}")
             output = f"[{model.capitalize()} Mock] Response to: Context: {prompt[:50]}..."
 
         self.cache[key] = output

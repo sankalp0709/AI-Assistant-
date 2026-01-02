@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import update, delete
+try:
+    from sqlalchemy.ext.asyncio import AsyncSession  # type: ignore
+    from sqlalchemy.future import select  # type: ignore
+    from sqlalchemy import update, delete  # type: ignore
+    _SQLALCHEMY_OK = True
+except Exception:
+    _SQLALCHEMY_OK = False
 from typing import List, Optional, Dict, Any
 
-# FIXED IMPORT ✔
-from ..core.database import get_db, Task
 from ..core.taskflow import task_flow
 
 router = APIRouter()
@@ -45,99 +47,102 @@ async def create_task_classification(request: TaskClassificationRequest):
     return {"task": task}
 
 
-@router.post("/tasks", response_model=TaskResponse)
-async def create_task(request: TaskRequest, db: AsyncSession = Depends(get_db)):
-    task = Task(description=request.description)
-    db.add(task)
-    await db.commit()
-    await db.refresh(task)
+if _SQLALCHEMY_OK:
+    from ..core.database import get_db, Task  # noqa: F401
 
-    return TaskResponse(
-        id=task.id,
-        description=task.description,
-        status=task.status,
-        created_at=task.created_at.isoformat(),
-        updated_at=task.updated_at.isoformat()
-    )
-
-
-@router.get("/tasks", response_model=List[TaskResponse])
-async def get_tasks(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Task))
-    tasks = result.scalars().all()
-
-    return [
-        TaskResponse(
-            id=t.id,
-            description=t.description,
-            status=t.status,
-            created_at=t.created_at.isoformat(),
-            updated_at=t.updated_at.isoformat()
-        )
-        for t in tasks
-    ]
-
-
-@router.get("/tasks/{task_id}", response_model=TaskResponse)
-async def get_task_by_id(task_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Task).where(Task.id == task_id))
-    task = result.scalar_one_or_none()
-
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    return TaskResponse(
-        id=task.id,
-        description=task.description,
-        status=task.status,
-        created_at=task.created_at.isoformat(),
-        updated_at=task.updated_at.isoformat()
-    )
-
-
-@router.put("/tasks/{task_id}", response_model=TaskResponse)
-async def update_task(task_id: int, request: TaskUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Task).where(Task.id == task_id))
-    task = result.scalar_one_or_none()
-
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    update_data = {}
-
-    if request.description is not None:
-        update_data["description"] = request.description
-
-    if request.status is not None:
-        update_data["status"] = request.status
-
-    if update_data:
-        await db.execute(
-            update(Task)
-            .where(Task.id == task_id)
-            .values(**update_data)
-        )
+    @router.post("/tasks", response_model=TaskResponse)
+    async def create_task(request: TaskRequest, db: AsyncSession = Depends(get_db)):
+        task = Task(description=request.description)
+        db.add(task)
         await db.commit()
         await db.refresh(task)
 
-    return TaskResponse(
-        id=task.id,
-        description=task.description,
-        status=task.status,
-        created_at=task.created_at.isoformat(),
-        updated_at=task.updated_at.isoformat()
-    )
+        return TaskResponse(
+            id=task.id,
+            description=task.description,
+            status=task.status,
+            created_at=task.created_at.isoformat(),
+            updated_at=task.updated_at.isoformat()
+        )
 
 
-@router.delete("/tasks/{task_id}")
-async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Task).where(Task.id == task_id))
-    task = result.scalar_one_or_none()
+    @router.get("/tasks", response_model=List[TaskResponse])
+    async def get_tasks(db: AsyncSession = Depends(get_db)):
+        result = await db.execute(select(Task))
+        tasks = result.scalars().all()
 
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        return [
+            TaskResponse(
+                id=t.id,
+                description=t.description,
+                status=t.status,
+                created_at=t.created_at.isoformat(),
+                updated_at=t.updated_at.isoformat()
+            )
+            for t in tasks
+        ]
 
-    await db.execute(delete(Task).where(Task.id == task_id))
-    await db.commit()
 
-    return {"message": "Task deleted successfully"}
+    @router.get("/tasks/{task_id}", response_model=TaskResponse)
+    async def get_task_by_id(task_id: int, db: AsyncSession = Depends(get_db)):
+        result = await db.execute(select(Task).where(Task.id == task_id))
+        task = result.scalar_one_or_none()
+
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        return TaskResponse(
+            id=task.id,
+            description=task.description,
+            status=task.status,
+            created_at=task.created_at.isoformat(),
+            updated_at=task.updated_at.isoformat()
+        )
+
+
+    @router.put("/tasks/{task_id}", response_model=TaskResponse)
+    async def update_task(task_id: int, request: TaskUpdate, db: AsyncSession = Depends(get_db)):
+        result = await db.execute(select(Task).where(Task.id == task_id))
+        task = result.scalar_one_or_none()
+
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        update_data = {}
+
+        if request.description is not None:
+            update_data["description"] = request.description
+
+        if request.status is not None:
+            update_data["status"] = request.status
+
+        if update_data:
+            await db.execute(
+                update(Task)
+                .where(Task.id == task_id)
+                .values(**update_data)
+            )
+            await db.commit()
+            await db.refresh(task)
+
+        return TaskResponse(
+            id=task.id,
+            description=task.description,
+            status=task.status,
+            created_at=task.created_at.isoformat(),
+            updated_at=task.updated_at.isoformat()
+        )
+
+
+    @router.delete("/tasks/{task_id}")
+    async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
+        result = await db.execute(select(Task).where(Task.id == task_id))
+        task = result.scalar_one_or_none()
+
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        await db.execute(delete(Task).where(Task.id == task_id))
+        await db.commit()
+
+        return {"message": "Task deleted successfully"}

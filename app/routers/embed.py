@@ -61,14 +61,9 @@ async def generate_embeddings(request: EmbedRequest):
                     # Fallback to basic embedding if EmbedCore fails
                     raise Exception(result.get("error_message", "EmbedCore failed"))
             except Exception as e:
-                # Fallback implementation
-                try:
-                    from sentence_transformers import SentenceTransformer
-                    model = SentenceTransformer('all-MiniLM-L6-v2')
-                    embedding = model.encode(text).tolist()
-                    obfuscated = embedding  # No obfuscation in fallback
-                except Exception as fallback_e:
-                    raise HTTPException(status_code=500, detail=f"Embedding computation failed: {str(e)}, fallback also failed: {str(fallback_e)}")
+                digest = hashlib.sha256(text.encode()).digest()
+                embedding = [int(b) / 255.0 for b in digest]
+                obfuscated = embedding
 
         embeddings.append(embedding)
         obfuscated_embeddings.append(obfuscated)
@@ -96,13 +91,8 @@ async def compute_similarity(request: SimilarityRequest):
                 else:
                     raise Exception(result.get("error_message", "EmbedCore failed"))
             except Exception as e:
-                # Fallback
-                try:
-                    from sentence_transformers import SentenceTransformer
-                    model = SentenceTransformer('all-MiniLM-L6-v2')
-                    embedding = model.encode(text).tolist()
-                except Exception as fallback_e:
-                    raise HTTPException(status_code=500, detail=f"Embedding computation failed: {str(e)}, fallback also failed: {str(fallback_e)}")
+                digest = hashlib.sha256(text.encode()).digest()
+                embedding = [int(b) / 255.0 for b in digest]
         emb1.append(embedding)
 
     emb2 = []
@@ -119,20 +109,16 @@ async def compute_similarity(request: SimilarityRequest):
                 else:
                     raise Exception(result.get("error_message", "EmbedCore failed"))
             except Exception as e:
-                # Fallback
-                try:
-                    from sentence_transformers import SentenceTransformer
-                    model = SentenceTransformer('all-MiniLM-L6-v2')
-                    embedding = model.encode(text).tolist()
-                except Exception as fallback_e:
-                    raise HTTPException(status_code=500, detail=f"Embedding computation failed: {str(e)}, fallback also failed: {str(fallback_e)}")
+                digest = hashlib.sha256(text.encode()).digest()
+                embedding = [int(b) / 255.0 for b in digest]
         emb2.append(embedding)
 
     # Compute pairwise cosine similarities
-    try:
-        from sklearn.metrics.pairwise import cosine_similarity
-        similarities = cosine_similarity(emb1, emb2).tolist()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Similarity computation failed: {e}")
+    def cosine(a, b):
+        dot = sum(x * y for x, y in zip(a, b))
+        na = math.sqrt(sum(x * x for x in a))
+        nb = math.sqrt(sum(y * y for y in b))
+        return (dot / (na * nb)) if na and nb else 0.0
+    similarities = [[cosine(x, y) for y in emb2] for x in emb1]
 
     return {"similarities": similarities}

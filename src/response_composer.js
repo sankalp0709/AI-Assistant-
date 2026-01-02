@@ -30,6 +30,13 @@ function normalizeStatus(payload) {
 function normalizeConfidence(payload) {
   const es = payload && payload.execution_status ? payload.execution_status : {}
   const s = payload && payload.summary ? payload.summary : {}
+  const trust = (es && es.trust) || (payload && payload.routing && payload.routing.trust) || {}
+  if (trust && trust.confidence_verified === true && typeof trust.confidence === 'number') {
+    const num = trust.confidence
+    if (num <= 0.4) return 'low'
+    if (num <= 0.7) return 'medium'
+    return 'high'
+  }
   const str = toString(es.confidence_level || s.confidence_level).toLowerCase()
   if (str === 'low' || str === 'medium' || str === 'high') return str
   const num = typeof es.confidence === 'number' ? es.confidence : typeof s.confidence === 'number' ? s.confidence : undefined
@@ -44,6 +51,13 @@ function resolveTraceId(payload) {
   const r = payload && payload.routing ? payload.routing : {}
   const es = payload && payload.execution_status ? payload.execution_status : {}
   const t = payload && payload.task ? payload.task : {}
+  const trust = (es && es.trust) || (r && r.trust) || {}
+  const verified = toString(
+    (trust && (trust.trace_ref || trust.trace_reference)) ||
+    r.verified_trace_id ||
+    es.verified_trace_id
+  )
+  if (verified) return verified
   const direct = toString(r.trace_id || es.trace_id || t.trace_id || t.id)
   if (direct) return direct
   const base = JSON.stringify(payload)
@@ -102,12 +116,23 @@ function templates(status, payload) {
 function composeAssistantResponse(payload) {
   const status = normalizeStatus(payload)
   const tpl = templates(status, payload)
-  return {
+  const out = {
     assistant_message: tpl.assistant_message,
     action_taken: tpl.action_taken,
     next_steps: tpl.next_steps,
     confidence_level: tpl.confidence_level,
     trace_id: tpl.trace_id,
   }
+  const msg = toString(out.assistant_message)
+  out.assistant_message = msg && msg.trim() ? msg : 'I processed your request.'
+  const act = toString(out.action_taken)
+  out.action_taken = act && act.trim() ? act : 'Processed request.'
+  out.next_steps = Array.isArray(out.next_steps) ? out.next_steps : []
+  const conf = toString(out.confidence_level).toLowerCase()
+  out.confidence_level = conf === 'high' || conf === 'medium' || conf === 'low' ? conf : 'medium'
+  const tid = toString(out.trace_id)
+  out.trace_id = tid || stableId(JSON.stringify(payload || {}))
+  out.response_version = 'v1'
+  return out
 }
 module.exports = { composeAssistantResponse }

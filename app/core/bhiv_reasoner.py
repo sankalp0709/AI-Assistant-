@@ -7,7 +7,7 @@ class BHIVReasoner:
 
         for task in plan["output"]["steps"]:
             if task["type"] == "research":
-                steps.append(await agents["researcher"].run(task, context))
+                steps.append(await agents["researcher"].run(task, context, tools=tools))
             elif task["type"] == "analyze":
                 steps.append(await agents["analyst"].run(task, context))
             elif task["type"] == "execute":

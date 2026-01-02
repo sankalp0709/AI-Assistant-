@@ -1,0 +1,50 @@
+name: ARL Contract Verification
+
+on:
+  push:
+    paths:
+      - "AI_ASSISTANT_PhaseB_Integration/**"
+  pull_request:
+    paths:
+      - "AI_ASSISTANT_PhaseB_Integration/**"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: AI_ASSISTANT_PhaseB_Integration
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run ARL unit tests
+        run: |
+          pytest -q tests/test_response_composer.py tests/test_snapshots.py tests/test_trust_readiness.py tests/test_smoke_ci.py
+
+      - name: Run Node.js Trust Verification
+        run: |
+          node scripts/test_node_trust.js
+
+      - name: Verify Integration Logic (TestClient)
+        run: |
+          python scripts/verify_integration.py
+
+      - name: Verify contract on response bank
+        run: |
+          python scripts/verify_contract.py --file examples/response_bank.json

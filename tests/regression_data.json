@@ -1,0 +1,95 @@
+[
+  {
+    "name": "Standard Task Created",
+    "input": {
+      "task": {
+        "task_type": "email",
+        "parameters": {
+          "message": "Send report to boss"
+        },
+        "priority": "high"
+      },
+      "execution_status": {
+        "status": "success"
+      }
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "assistant_message": "I've created a email task for you: Send report to boss.",
+      "action_taken": "Created email task with priority high.",
+      "confidence_level": "high"
+    }
+  },
+  {
+    "name": "Standard Task Scheduled",
+    "input": {
+      "task": {
+        "task_type": "meeting",
+        "parameters": {
+          "datetime": "tomorrow at 2pm"
+        }
+      },
+      "execution_status": {
+        "status": "success"
+      }
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "assistant_message": "I've scheduled your meeting for tomorrow at 2pm.",
+      "confidence_level": "high"
+    }
+  },
+  {
+    "name": "Task Failed",
+    "input": {
+      "execution_status": {
+        "status": "error",
+        "error": "Database timeout"
+      }
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "assistant_message": "I encountered an issue while processing your request.",
+      "action_taken": "Failed to execute task: Database timeout."
+    }
+  },
+  {
+    "name": "Clarification Needed",
+    "input": {
+      "execution_status": {
+        "status": "clarification_needed",
+        "clarification_prompt": "Which boss?"
+      }
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "assistant_message": "I need a bit more information to proceed. Which boss?",
+      "action_taken": "Requested clarification."
+    }
+  },
+  {
+    "name": "Trace ID Propagation",
+    "input": {
+      "task": {
+        "trace_id": "test-trace-123",
+        "task_type": "reminder"
+      }
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "trace_id": "test-trace-123"
+    }
+  },
+  {
+    "name": "Malformed Input (String instead of Dict)",
+    "input": {
+      "task": "this is a string not a dict"
+    },
+    "expected_partial": {
+      "response_version": "v1",
+      "assistant_message": "I encountered an internal error while processing your request.",
+      "action_taken": "System error caught during response composition.",
+      "confidence_level": "low"
+    }
+  }
+]

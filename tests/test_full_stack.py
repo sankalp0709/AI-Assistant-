@@ -1,10 +1,13 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
+# Ensure API key is set to match tests
+os.environ["API_KEY"] = os.environ.get("API_KEY", "localtest")
+
 client = TestClient(app)
-# Set API key for all requests
-client.headers.update({"X-API-Key": "localtest"})
+client.headers.update({"X-API-Key": os.environ["API_KEY"]})
 
 def test_root():
     response = client.get("/")
@@ -22,9 +25,9 @@ def test_intent():
     assert "intent" in response.json()
 
 def test_task():
-    response = client.post("/api/task", json={"description": "Test task"})
+    response = client.post("/api/task", json={"intent": "note", "original_text": "Test task"})
     assert response.status_code == 200
-    assert "task_id" in response.json()
+    assert "task" in response.json()
 
 def test_decision_hub():
     response = client.post("/api/decision_hub", data={
@@ -34,15 +37,13 @@ def test_decision_hub():
     })
     assert response.status_code == 200
     data = response.json()
-    assert "final_decision" in data
-    assert "confidence" in data
-    assert "selected_agent" in data
-    assert "preferred_llm" in data
-    assert "device_context" in data
-    assert "memory_reference" in data
+    required = ["assistant_message", "action_taken", "next_steps", "confidence_level", "trace_id", "response_version"]
+    for k in required:
+        assert k in data
+    assert data["response_version"] == "v1"
 
 def test_decision_hub_vr():
-    response = client.post("/api/decision_hub", json={
+    response = client.post("/api/decision_hub", data={
         "input_text": "Speak something",
         "platform": "vr",
         "device_context": "vr",
@@ -50,7 +51,10 @@ def test_decision_hub_vr():
     })
     assert response.status_code == 200
     data = response.json()
-    assert data["device_context"] == "vr"
+    required = ["assistant_message", "action_taken", "next_steps", "confidence_level", "trace_id", "response_version"]
+    for k in required:
+        assert k in data
+    assert data["response_version"] == "v1"
 
 def test_rl_action():
     response = client.post("/api/rl_action", json={"state": {}, "actions": ["action1", "action2"]})
@@ -68,15 +72,15 @@ def test_respond():
     assert "response" in response.json()
 
 def test_voice_stt():
-    # Mock file upload
+    # Stub STT via form param
     response = client.post("/api/voice_stt", data={"request": '{"audio_url": "test"}'})
     assert response.status_code == 200
     assert "text" in response.json()
 
 def test_voice_tts():
-    response = client.post("/api/voice_tts", json={"text": "Hello", "voice": "default"})
+    response = client.post("/api/voice_tts", json={"text": "Hello", "voice": "alloy"})
     assert response.status_code == 200
-    assert "audio_url" in response.json()
+    assert "audio_base64" in response.json()
 
 def test_external_llm():
     response = client.post("/api/external_llm", json={"prompt": "Hello", "model": "uniguru"})

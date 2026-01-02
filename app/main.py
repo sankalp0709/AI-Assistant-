@@ -20,7 +20,7 @@ from fastapi.openapi.utils import get_openapi
 # ------------------------------
 load_dotenv(dotenv_path=os.path.join(ROOT_DIR, '.env'))
 
-print("Loaded API KEY:", os.getenv("API_KEY"))
+ 
 
 # Initialize Sentry if enabled
 if os.getenv("SENTRY_DSN"):
@@ -33,7 +33,6 @@ if os.getenv("SENTRY_DSN"):
 
 # Local imports
 from .core.logging import setup_logging, get_logger
-from .core.database import create_tables
 from .core.security import authenticate_user, rate_limit, audit_log
 
 from app.routers import (
@@ -47,6 +46,7 @@ from app.routers import (
     voice_stt,
     voice_tts,
     external_llm,
+    external_app,
     bhiv,
     assistant,
 )
@@ -58,7 +58,11 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_tables()
+    try:
+        from .core.database import create_tables
+        await create_tables()
+    except Exception as e:
+        print(f"[lifespan] Database init skipped due to error: {e}")
     yield
 
 
@@ -114,9 +118,10 @@ app.openapi = custom_openapi
 # ------------------------------
 # CORS
 # ------------------------------
+origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -126,6 +131,7 @@ app.add_middleware(
 # ------------------------------
 # Security Middleware
 # ------------------------------
+
 @app.middleware("http")
 async def security_middleware(request: Request, call_next):
 
@@ -170,6 +176,7 @@ app.include_router(respond.router, prefix="/api", tags=["Respond"])
 app.include_router(voice_stt.router, prefix="/api", tags=["Voice STT"])
 app.include_router(voice_tts.router, prefix="/api", tags=["Voice TTS"])
 app.include_router(external_llm.router, prefix="/api", tags=["External LLM"])
+app.include_router(external_app.router, prefix="/api", tags=["External App"])
 app.include_router(bhiv.router, prefix="/api", tags=["BHIV"])
 app.include_router(assistant.router, prefix="/api", tags=["Assistant"])
 

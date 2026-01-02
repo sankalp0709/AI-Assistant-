@@ -1,0 +1,152 @@
+[
+  {
+    "name": "Task Created - Email",
+    "input": {
+      "task": {
+        "task_type": "email",
+        "parameters": {
+          "message": "Send report to boss"
+        },
+        "priority": "high"
+      },
+      "execution_status": {
+        "status": "success",
+        "trust": {
+          "confidence": 0.9,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-001",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I've created a email task for you: Send report to boss.",
+      "action_taken": "Created email task with priority high.",
+      "next_steps": ["Review task details", "Modify if needed"],
+      "confidence_level": "high",
+      "trace_id": "snapshot-trace-001",
+      "response_version": "v1"
+    }
+  },
+  {
+    "name": "Task Scheduled - Meeting",
+    "input": {
+      "task": {
+        "task_type": "meeting",
+        "parameters": {
+          "datetime": "2025-01-02 10:00"
+        },
+        "priority": "normal"
+      },
+      "execution_status": {
+        "status": "success",
+        "trust": {
+          "confidence": 0.85,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-002",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I've scheduled your meeting for 2025-01-02 10:00.",
+      "action_taken": "Scheduled meeting at 2025-01-02 10:00.",
+      "next_steps": ["Check calendar", "Set reminder"],
+      "confidence_level": "high",
+      "trace_id": "snapshot-trace-002",
+      "response_version": "v1"
+    }
+  },
+  {
+    "name": "Task Deferred",
+    "input": {
+      "execution_status": {
+        "status": "success",
+        "deferred": true,
+        "trust": {
+          "confidence": 0.6,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-003",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I've noted that down but haven't scheduled it yet.",
+      "action_taken": "Deferred task creation.",
+      "next_steps": ["Provide time to schedule", "Add more details"],
+      "confidence_level": "medium",
+      "trace_id": "snapshot-trace-003",
+      "response_version": "v1"
+    }
+  },
+  {
+    "name": "Task Failed",
+    "input": {
+      "execution_status": {
+        "status": "error",
+        "error": "Database timeout",
+        "trust": {
+          "confidence": 0.2,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-004",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I encountered an issue while processing your request.",
+      "action_taken": "Failed to execute task: Database timeout.",
+      "next_steps": ["Retry with clear instructions", "Check system status"],
+      "confidence_level": "low",
+      "trace_id": "snapshot-trace-004",
+      "response_version": "v1"
+    }
+  },
+  {
+    "name": "Clarification Needed",
+    "input": {
+      "execution_status": {
+        "status": "clarification_needed",
+        "clarification_prompt": "Which boss?",
+        "trust": {
+          "confidence": 0.55,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-005",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I need a bit more information to proceed. Which boss?",
+      "action_taken": "Requested clarification.",
+      "next_steps": ["Provide missing details"],
+      "confidence_level": "medium",
+      "trace_id": "snapshot-trace-005",
+      "response_version": "v1"
+    }
+  },
+  {
+    "name": "Default",
+    "input": {
+      "routing": {},
+      "execution_status": {
+        "status": "success",
+        "trust": {
+          "confidence": 0.5,
+          "confidence_verified": true,
+          "trace_ref": "snapshot-trace-006",
+          "trace_ref_verified": true
+        }
+      }
+    },
+    "expected": {
+      "assistant_message": "I processed your request.",
+      "action_taken": "Processed request.",
+      "next_steps": [],
+      "confidence_level": "medium",
+      "trace_id": "snapshot-trace-006",
+      "response_version": "v1"
+    }
+  }
+]

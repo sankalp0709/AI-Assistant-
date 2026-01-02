@@ -1,0 +1,20 @@
+{
+  "name": "@assistant/response-layer",
+  "version": "1.0.0",
+  "description": "Deterministic Assistant Response Layer (ARL) for backend consumption",
+  "main": "response_composer.js",
+  "type": "commonjs",
+  "exports": {
+    ".": "./response_composer.js"
+  },
+  "keywords": [
+    "assistant",
+    "response",
+    "deterministic",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "license": "UNLICENSED"
+}
