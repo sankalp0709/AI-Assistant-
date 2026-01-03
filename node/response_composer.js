@@ -34,8 +34,9 @@ function composeAssistantResponse({ summary = {}, task = {}, routing = {}, execu
 
   function determineScenario(task, execution_status, routing) {
     const status = execution_status?.status;
+    const needsClar = execution_status?.requires_clarification === true || task?.requires_clarification === true;
     if (status === "error") return "task_failed";
-    if (status === "clarification_needed") return "clarification_needed";
+    if (status === "clarification_needed" || needsClar) return "clarification_needed";
     if (execution_status?.deferred) return "task_deferred";
     if (task && task.task_type) {
       const params = task.parameters || {};

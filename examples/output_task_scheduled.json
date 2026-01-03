@@ -1,10 +1,11 @@
 {
-  "assistant_message": "Task scheduled. Nightly DB Backup.",
-  "action_taken": "Scheduled task",
+  "assistant_message": "I've scheduled your task for unspecified time.",
+  "action_taken": "Scheduled task at unspecified time.",
   "next_steps": [
-    "Await schedule",
-    "Confirm start"
+    "Check calendar",
+    "Set reminder"
   ],
   "confidence_level": "high",
-  "trace_id": "trace-002"
+  "trace_id": "trace-002",
+  "response_version": "v1"
 }

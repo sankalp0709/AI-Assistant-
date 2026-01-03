@@ -20,6 +20,7 @@ function normalizeStatus(payload) {
   const explicit = toString(es.status || t.status || r.status).toLowerCase()
   const needsClar = es.requires_clarification === true || t.requires_clarification === true
   if (needsClar) return 'clarification_needed'
+  if (explicit === 'clarification_needed') return 'clarification_needed'
   if (explicit === 'failed') return 'failed'
   if (explicit === 'deferred') return 'deferred'
   if (explicit === 'scheduled') return 'scheduled'
@@ -68,47 +69,57 @@ function taskName(payload) {
   return toString(t.name || t.title || t.display_name || t.label)
 }
 function templates(status, payload) {
-  const name = taskName(payload)
+  const t = payload && payload.task ? payload.task : {}
+  const es = payload && payload.execution_status ? payload.execution_status : {}
+
+  const taskType = toString(t.task_type || 'task')
+  const description = toString(t.description || t.name || t.title || t.display_name || t.label || 'item')
+  const priority = toString(t.priority || 'normal')
+  const params = t.parameters || {}
+  const datetime = toString(params.datetime || t.datetime || 'unspecified time')
+  const errorReason = toString(es.error || es.failure || es.reason || 'unknown error')
+  const clarificationPrompt = toString(es.clarification_prompt || t.clarification_prompt || 'Could you provide more details?')
+
   if (status === 'created') {
     return {
-      assistant_message: name ? 'Task created. ' + name + '.' : 'Task created.',
-      action_taken: 'Created task',
-      next_steps: ['Begin execution', 'Monitor progress'],
+      assistant_message: "I've created a " + taskType + " task for you: " + description + ".",
+      action_taken: "Created " + taskType + " task with priority " + priority + ".",
+      next_steps: ['Review task details', 'Modify if needed'],
       confidence_level: normalizeConfidence(payload),
       trace_id: resolveTraceId(payload),
     }
   }
   if (status === 'scheduled') {
     return {
-      assistant_message: name ? 'Task scheduled. ' + name + '.' : 'Task scheduled.',
-      action_taken: 'Scheduled task',
-      next_steps: ['Await schedule', 'Confirm start'],
+      assistant_message: "I've scheduled your " + taskType + " for " + datetime + ".",
+      action_taken: "Scheduled " + taskType + " at " + datetime + ".",
+      next_steps: ['Check calendar', 'Set reminder'],
       confidence_level: normalizeConfidence(payload),
       trace_id: resolveTraceId(payload),
     }
   }
   if (status === 'deferred') {
     return {
-      assistant_message: name ? 'Task deferred. ' + name + '.' : 'Task deferred.',
-      action_taken: 'Deferred task',
-      next_steps: ['Resolve blockers', 'Reschedule'],
+      assistant_message: "I've noted that down but haven't scheduled it yet.",
+      action_taken: "Deferred task creation.",
+      next_steps: ['Provide time to schedule', 'Add more details'],
       confidence_level: normalizeConfidence(payload),
       trace_id: resolveTraceId(payload),
     }
   }
   if (status === 'failed') {
     return {
-      assistant_message: name ? 'Task failed. ' + name + '.' : 'Task failed.',
-      action_taken: 'Recorded failure',
-      next_steps: ['Review cause', 'Apply fix', 'Retry'],
+      assistant_message: "I encountered an issue while processing your request.",
+      action_taken: "Failed to execute task: " + errorReason + ".",
+      next_steps: ['Retry with clear instructions', 'Check system status'],
       confidence_level: normalizeConfidence(payload),
       trace_id: resolveTraceId(payload),
     }
   }
   return {
-    assistant_message: name ? 'Clarification needed. ' + name + '.' : 'Clarification needed.',
-    action_taken: 'Requested clarification',
-    next_steps: ['Provide missing details', 'Confirm scope'],
+    assistant_message: "I need a bit more information to proceed. " + clarificationPrompt,
+    action_taken: "Requested clarification.",
+    next_steps: ['Provide missing details'],
     confidence_level: normalizeConfidence(payload),
     trace_id: resolveTraceId(payload),
   }

@@ -1,10 +1,11 @@
 {
-  "assistant_message": "Task deferred. Patch Rollout.",
-  "action_taken": "Deferred task",
+  "assistant_message": "I've noted that down but haven't scheduled it yet.",
+  "action_taken": "Deferred task creation.",
   "next_steps": [
-    "Resolve blockers",
-    "Reschedule"
+    "Provide time to schedule",
+    "Add more details"
   ],
   "confidence_level": "medium",
-  "trace_id": "trace-003"
+  "trace_id": "trace-003",
+  "response_version": "v1"
 }

@@ -1,11 +1,11 @@
 {
-  "assistant_message": "Task failed. Campaign Send.",
-  "action_taken": "Recorded failure",
+  "assistant_message": "I encountered an issue while processing your request.",
+  "action_taken": "Failed to execute task: SMTP credentials invalid.",
   "next_steps": [
-    "Review cause",
-    "Apply fix",
-    "Retry"
+    "Retry with clear instructions",
+    "Check system status"
   ],
   "confidence_level": "low",
-  "trace_id": "trace-004"
+  "trace_id": "trace-004",
+  "response_version": "v1"
 }

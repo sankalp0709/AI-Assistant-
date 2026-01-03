@@ -3,17 +3,14 @@ name: ARL Contract Verification
 on:
   push:
     paths:
-      - "AI_ASSISTANT_PhaseB_Integration/**"
+      - "**"
   pull_request:
     paths:
-      - "AI_ASSISTANT_PhaseB_Integration/**"
+      - "**"
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: AI_ASSISTANT_PhaseB_Integration
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,6 +37,10 @@ jobs:
       - name: Run Node.js Trust Verification
         run: |
           node scripts/test_node_trust.js
+
+      - name: Run Node.js Regression Tests
+        run: |
+          node node/test_regression.js
 
       - name: Verify Integration Logic (TestClient)
         run: |

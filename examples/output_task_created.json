@@ -1,10 +1,11 @@
 {
-  "assistant_message": "Task created. Monthly Report Generation.",
-  "action_taken": "Created task",
+  "assistant_message": "I've created a task task for you: Monthly Report Generation.",
+  "action_taken": "Created task task with priority normal.",
   "next_steps": [
-    "Begin execution",
-    "Monitor progress"
+    "Review task details",
+    "Modify if needed"
   ],
   "confidence_level": "high",
-  "trace_id": "trace-001"
+  "trace_id": "trace-001",
+  "response_version": "v1"
 }

@@ -42,6 +42,11 @@
   - response_version: string → enforced "v1"
 - Implementation: [response_composer.py](file:///c:/Users/user11/Desktop/int/AI_ASSISTANT_PhaseB_Integration/app/core/response_composer.py#L196-L212)
 
+## Styling & Consistency
+- Messaging Tone: Conversational sentences (e.g., "I've created a task...", "I need a bit more information...")
+- Clarification Behavior: "I need a bit more information to proceed. {clarification_prompt}"
+- Both Python and Node implementations must adhere to these templates to ensure a unified user experience.
+
 ## Lifecycle States (Internal Mapping)
 - Task Created
 - Task Scheduled
